@@ -1,0 +1,81 @@
+description = 'GeomesaGeospark'
+
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:$shadowPluginV"
+    }
+}
+
+configurations.all {
+    exclude group: 'xerces', module: 'xercesImpl'
+}
+
+allprojects {
+    group = 'com.geoheil.geomesaspark'
+
+    ext {
+        scalaFullV = "${scalaMinorV}.$scalaPatchV"
+        sparkFullV = "$sparkOpenV.$sparkOpenVPatch.$hdpV"
+
+        deps = [geomesaSparkSql    : "org.locationtech.geomesa:geomesa-spark-sql_${scalaMinorV}:$geomesaV",
+                geospark           : "org.datasyslab:geospark:$geosparkV",
+                geosparkSql        : "org.datasyslab:geospark-sql_$sparkOpenV:$geosparkV",
+                sparkCore          : "org.apache.spark:spark-core_${scalaMinorV}:$sparkFullV",
+                sparkSql           : "org.apache.spark:spark-sql_${scalaMinorV}:$sparkFullV",
+                sparkHive          : "org.apache.spark:spark-hive_${scalaMinorV}:$sparkFullV",
+                scalaLib           : "org.scala-lang:scala-library:$scalaFullV"
+        ]
+    }
+
+    repositories {
+        maven { url "https://repo.locationtech.org/content/groups/releases" }
+        maven { url "http://repo.boundlessgeo.com/main" }
+        maven { url "http://download.osgeo.org/webdav/geotools" }
+        maven { url "http://conjars.org/repo" }
+        jcenter()
+        mavenCentral()
+        maven { url "http://nexus-private.hortonworks.com/nexus/content/groups/public" }
+    }
+
+    apply plugin: 'scala'
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    dependencies {
+
+        compile deps.geomesaSparkSql
+        compile deps.geospark
+        compile deps.geosparkSql
+
+        compileOnly deps.sparkCore
+        compileOnly deps.sparkSql
+        compileOnly deps.sparkHive
+        compileOnly deps.scalaLib
+
+    }
+
+    shadowJar {
+        zip64 true
+        dependencies {
+            exclude(dependency("com.chuusai:shapeless_$scalaMinorV"))
+        }
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'NOTICE'
+        exclude 'LICENSE'
+        exclude 'LICENSE.txt'
+        exclude 'LICENSE-2.0.txt'
+    }
+}

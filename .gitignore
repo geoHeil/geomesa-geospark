@@ -1,0 +1,6 @@
+.gradle/4.8.1/fileChanges
+.gradle
+.idea
+build
+derby.log
+metastore_db
