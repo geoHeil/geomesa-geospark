@@ -35,14 +35,12 @@ object Foo extends App {
   import spark.implicits._
 
   // register spatial functions
+  // now using custom namespace
+  CustomGeosparkRegistrator.registerAll(spark)
   // register geomesa functions
   spark.withJTS
   // register geospark functions TODO WARNING function names overlap. Require custom registrator
   //GeoSparkSQLRegistrator.registerAll(spark)
-
-  // now using custom namespace
-  CustomGeosparkRegistrator.registerAll(spark)
-  FunctionRegistry.functionSet.foreach(println)
 
   val points = Seq(MyPoint(1, 30, 10), MyPoint(2, 31, 35)).toDS
     .withColumn("x", col("x").cast(DecimalType(38, 18)))
