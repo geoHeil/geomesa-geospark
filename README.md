@@ -76,3 +76,10 @@ optimized range join
             :- LocalTableScan [geom_polygons#43]
             +- LocalTableScan [geom_points#31]
 ```
+
+## edit 2
+adding
+```
+sparkSession.experimental.extraStrategies = JoinQueryDetector :: Nil
+```
+now allows for optimized joins
