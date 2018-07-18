@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DecimalType
+import org.datasyslab.geospark.serde.GeoSparkKryoRegistrator
 import org.datasyslab.geosparksql.utils.GeoSparkSQLRegistrator
 import org.locationtech.geomesa.spark.jts._
 
@@ -20,7 +21,6 @@ object Foo extends App {
     .builder()
     .config(new SparkConf()
       .setAppName("geomesaGeospark")
-      .setMaster("local[*]")
       .setIfMissing("spark.serializer",
         classOf[KryoSerializer].getCanonicalName)
       .setIfMissing("spark.kryo.unsafe", "true")
@@ -33,14 +33,15 @@ object Foo extends App {
     .getOrCreate()
 
   import spark.implicits._
-
+  CustomGeosparkRegistrator.registerAll(spark)
   // register spatial functions
   // now using custom namespace
   // register geomesa functions
   spark.withJTS
   // register geospark functions TODO WARNING function names overlap. Require custom registrator
   //GeoSparkSQLRegistrator.registerAll(spark)
-  CustomGeosparkRegistrator.registerAll(spark)
+  spark.sessionState.functionRegistry.listFunction.foreach(println)
+
 
   val points = Seq(MyPoint(1, 30, 10), MyPoint(2, 31, 35)).toDS
     .withColumn("x", col("x").cast(DecimalType(38, 18)))
