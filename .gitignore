@@ -4,3 +4,5 @@
 build
 derby.log
 metastore_db
+target/
+.DS_Store
