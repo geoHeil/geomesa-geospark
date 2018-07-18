@@ -5,14 +5,10 @@ import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.DecimalType
-import org.locationtech.geomesa.spark.jts._
+import org.datasyslab.geosparksql.utils.GeoSparkSQLRegistrator
 
 
-case class MyPoint(id: Int, x: Double, y: Double)
-
-case class MyGeometry(id: Int, wkt: String)
-
-object Foo extends App {
+object FooGeosparkSolo extends App {
 
   val spark = SparkSession
     .builder()
@@ -32,13 +28,7 @@ object Foo extends App {
 
   import spark.implicits._
 
-  // register spatial functions
-  // now using custom namespace
-  // register geomesa functions
-  CustomGeosparkRegistrator.registerAll(spark)
-  spark.withJTS
-  // register geospark functions TODO WARNING function names overlap. Require custom registrator
-  //GeoSparkSQLRegistrator.registerAll(spark)
+  GeoSparkSQLRegistrator.registerAll(spark)
 
   spark.sessionState.functionRegistry.listFunction.foreach(println)
 
@@ -49,17 +39,11 @@ object Foo extends App {
   val polygons = Seq(MyGeometry(1, "POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10),\n(20 30, 35 35, 30 20, 20 30))"), MyGeometry(2, "MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))")).toDS
   polygons.show
 
-  // perform some sptial computations in geomesa (these functions are not available in geospark
-  val polygonsEnriched = polygons
-    .withColumn("centeroid_x", st_x(st_centroid(st_geomFromWKT(col("wkt")))))
-    .withColumn("centeroid_y", st_y(st_centroid(st_geomFromWKT(col("wkt")))))
-
-  polygonsEnriched.show
 
   // perform a spatial join, first create spatial binary geometry types using geospark functions, then join
-  val pointsGeom = points.withColumn("geom_points", expr(s"geospark_ST_Point(x, y)"))
+  val pointsGeom = points.withColumn("geom_points", expr(s"ST_Point(x, y)"))
   pointsGeom.show
-  val polygonsGeom = polygonsEnriched.withColumn("geom_polygons", expr(s"geospark_ST_GeomFromWKT(wkt)"))
+  val polygonsGeom = polygons.withColumn("geom_polygons", expr(s"ST_GeomFromWKT(wkt)"))
   polygonsGeom.show
 
 
@@ -71,7 +55,7 @@ object Foo extends App {
       """
         |SELECT *
         |FROM polygons, points
-        |WHERE geospark_ST_Contains(polygons.geom_polygons, points.geom_points)
+        |WHERE ST_Contains(polygons.geom_polygons, points.geom_points)
       """.stripMargin)
 
   joinedDF.show(false)
